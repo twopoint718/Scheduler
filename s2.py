@@ -3,26 +3,33 @@ from draw import HLine, Point, Rectangle, Scene, VLine
 from sched_parser import parse_all, parse_file
 
 def inches(x):
+    """Converts to inches (72 pts. == 1 in.)"""
     return 72 * x
 
-def main():
-    bounding_box = Rectangle(Point(0, 0), Point(inches(8.5), inches(4)))
-    s = Scene(bounding_box)
-    s = schedule_grid(s)
-    s.render()
+def schedule_grid(title, scene):
+    """Draws a standard Schedule grid:
 
-def schedule_grid(scene):
+    |       | Mon | Tue | Wed | Thur | Fri |
+    |-------+-----+-----+-----+------+-----|
+    |  7:45 |     |     |     |      |     |
+    |  8:50 |     |     |     |      |     |
+    |  9:55 |     |     |     |      |     |
+    | 11:00 |     |     |     |      |     |
+    | 12:05 |     |     |     |      |     |
+    |  1:20 |     |     |     |      |     |
+    |  2:25 |     |     |     |      |     |
+    | ...   |     |     |     |      |     |
+
+    """
     margin = 5
-
-
     
     # add background (shaded area)
-    o, e = scene.bounds.origin, scene.bounds.extent
+    o, e = scene.bounds.corners()
     bg = Rectangle(o, e)
     bg = bg.shrink(margin)\
         .lower(30)\
         .fill(0.8)\
-        .label_above("Schedule", 18)
+        .label_above(title, 18, 8) # fontsize 18, move up 8pt
 
     day_width = bg.width / 6.0
 
@@ -30,12 +37,14 @@ def schedule_grid(scene):
     lab = Rectangle(bg.origin.copy(), Point(bg.min_x + day_width, bg.max_y))
 
     # add days
-    mon = lab.copy_geom().translate((day_width, 0)).label_above("Monday")
-    tue = mon.copy_geom().translate((day_width, 0)).label_above("Tuesday")
-    wed = tue.copy_geom().translate((day_width, 0)).label_above("Wednesday")
-    thu = wed.copy_geom().translate((day_width, 0)).label_above("Thursday")
-    fri = thu.copy_geom().translate((day_width, 0)).label_above("Friday")
+    adjustment = -2 # move labels slightly down
+    mon = lab.copy().translate((day_width, 0)).label_above("Monday", 12, adjustment)
+    tue = mon.copy().translate((day_width, 0)).label_above("Tuesday", 12, adjustment)
+    wed = tue.copy().translate((day_width, 0)).label_above("Wednesday", 12, adjustment)
+    thu = wed.copy().translate((day_width, 0)).label_above("Thursday", 12, adjustment)
+    fri = thu.copy().translate((day_width, 0)).label_above("Friday", 12, adjustment)
 
+    # add the days to the scene
     scene.add(bg)
     scene.add(mon)
     scene.add(tue)
@@ -60,21 +69,27 @@ def schedule_grid(scene):
     diff_times = list(map(diff_time, start_times, start_times[1:]))
     diff_times.insert(0, 0)
 
-    # fill in the time labels
-    x1, x2 = lab.min_x, lab.max_x
-    offset = lab.min_y
-    lower = offset + minutes(diff_times[0])
-    upper = lower + minutes(diff_times[1])
+    # fill in the time labels (and horiz lines)
+    width = bg.max_x - bg.min_x
     for i in range(1, len(diff_times)):
-        upper = lower + minutes(diff_times[i])
-        p1 = Point(x1, lower)
-        p2 = Point(x2, upper)
-        r = Rectangle(p1, p2)
-        r.label_inside("%d:%02d" % (start_times[i-1][0]%12, start_times[i-1][1]))
-        scene.add(r)
-        lower = upper
+        line = HLine(Point(bg.min_x, bg.max_y - minutes(sum(diff_times[:i]))), width)
+        h = start_times[i-1][0] % 12
+        if h == 0:
+            h = 12
+        m = start_times[i-1][1]
+        line.label_below_left("%d:%02d" % (h, m), 8, 5, -8)
+        scene.add(line)
 
     return scene
+
+def main():
+    paper_size = Point(inches(8.5), inches(4))
+    bounding_box = Rectangle(Point(0, 0), paper_size)
+    s = Scene(bounding_box)
+
+    # draw the scheduling grid
+    s = schedule_grid("Testing", s)
+    s.render()
 
 if __name__ == "__main__":
     main()
