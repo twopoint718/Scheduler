@@ -39,8 +39,8 @@ class Point:
         """move point along a line parallel (or possibly equal) to the line
         y = x
         """
-        self.x + i
-        self.y + i
+        self.x = self.x + i
+        self.y = self.y + i
         return self
 
     def translate(self, mov):
@@ -72,7 +72,7 @@ class Scene:
         """create postscript output for all the objects in the scene by
         calling each of their respective render methods
         """
-        render_preamble(self.bounds)
+        render_preamble(self.bounds, toFile)
         for obj in self.objects:
             obj.render(toFile)
         render_footer(toFile)
@@ -151,25 +151,36 @@ class Rectangle:
         """create a label above and to the left of the rectangle"""
         p = Point(self.origin.x + hbump, self.max_y + fontsize/2)
         self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=False)
+        return self
 
     def label_below_left(self, txt, fontsize=12.0, hbump=0, vbump=0):
         p = Point(self.origin.x + hbump, self.min_y - fontsize/2 + vbump)
         self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=False)
+        return self
 
-    def label_inside(self, txt, fontsize=12):
+    def label_inside(self, txt, fontsize=10):
         """center the label both horizontally and vertically inside the
-        rectangle
+        rectangle. txt can be a list of strings, these will be formatted
+        one to a line with a bigger header line
         """
-        p = Point(self.center_x, self.center_y)
+        p = Point(self.center_x, self.center_y - fontsize/2.7)
         self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=True)
+        return self
+
+    def label_inside_multi(self, txt, fontsize=10, hbump=0, vbump=0):
+        """label inside the rectangle starting in the upper left, suitable
+        for labeling section information
+        """
+        p = Point(self.min_x + hbump, self.max_y + vbump)
+        self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=False)
+        return self
 
     def render(self, toFile=sys.stdout):
         """call to the low-level drawing primitives"""
-        if self.label:
-            self.label.render(toFile)
-        if self.fill:
-            return box(self.origin, self.extent, self.filled, self.fill_color)
-        return box(self.origin, self.extent)
+        b = box(self.origin, self.extent, self.filled, self.fill_color,
+                toFile)
+        self.label.render(toFile)
+        return b
 
     def shrink(self, x):
         "return a rectangle that's smaller by x at each margin"
@@ -225,7 +236,7 @@ class VLine(Rectangle):
 
 class Text:
     """A Text object.  Often this is part of a Rectangle instance as its
-    label
+    label.  This can be multiline if txt is a list of strings
     """
     def __init__(self, pos, txt, hCenter=True, font="Helvetica", size=12):
         self.pos = pos
@@ -236,8 +247,20 @@ class Text:
 
     def render(self, toFile=sys.stdout):
         """call to the low-level drawing primitives"""
-        return text(self.pos, self.txt, self.font, self.size, self.hCenter,
-                    toFile)
+        # render multiline text
+        if type(self.txt) == type(list()):
+            offset = self.size
+            text(Point(self.pos.x, self.pos.y - offset), self.txt[0],
+                 self.font, self.size, self.hCenter, toFile)
+            for line in self.txt[1:]:
+                offset = offset + (self.size - 2)
+                text(Point(self.pos.x, self.pos.y - offset), line, self.font,
+                     self.size - 2, self.hCenter, toFile)
+
+            return "\n".join(self.txt)
+
+        # single line of text
+        return text(self.pos, self.txt, self.font, self.size, self.hCenter, toFile)
     
     def __repr__(self):
         return "Text(%s)" % self.txt
@@ -287,8 +310,7 @@ def box(p1, p2, fill=False, color=1.0, toFile=sys.stdout):
         lines.append("%0.2f setgray" % color)
         lines.append("fill")
         lines.append("0 setgray grestore")
-    else:
-        lines.append("closepath stroke")
+    lines.append("closepath stroke")
     print("\n".join(lines), file=toFile)
     return lines
 
