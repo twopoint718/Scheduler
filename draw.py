@@ -61,12 +61,18 @@ class Scene:
     def __init__(self, bounds):
         self.objects = list()
         self.bounds = bounds
+        self.canvas = None
 
-    def add(self, obj):
+    def add(self, obj, canvas=False):
         """add an object to the scene if it lies fully within the bounds"""
+        if canvas or self.canvas == None: # set the "working" object (background measurements)
+            self.canvas = obj
         if not obj.contained_in(self.bounds):
-            raise ValueError("Object [%s] is outside the scene" % obj)
+            raise ValueError("Object %s is outside the scene %s" % (obj, self))
         self.objects.append(obj)
+
+    def get_canvas(self):
+        return self.canvas
     
     def render(self, toFile=sys.stdout):
         """create postscript output for all the objects in the scene by
@@ -76,6 +82,9 @@ class Scene:
         for obj in self.objects:
             obj.render(toFile)
         render_footer(toFile)
+
+    def __repr__(self):
+        return "Scene(%s, %s)" % (self.bounds, self.canvas)
 
 class Rectangle:
     """Defined by the lower-left corner (origin) and the upper-right corner
@@ -105,7 +114,8 @@ class Rectangle:
         self.origin = origin
         self.extent = extent
         if self.origin > self.extent:
-            raise ValueError("Origin is greater than far corner!")
+            raise ValueError("Origin %s is greater than far corner %s!" % \
+                                 (self.origin, self.extent))
         self.min_x = self.origin.x
         self.max_x = self.extent.x
         self.min_y = self.origin.y
@@ -244,6 +254,12 @@ class Text:
         self.hCenter = hCenter
         self.font = font
         self.size = size
+        self.height = 0
+        self.width = 0
+
+    def contained_in(self, rect):
+        """You're on your own"""
+        return True
 
     def render(self, toFile=sys.stdout):
         """call to the low-level drawing primitives"""

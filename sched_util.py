@@ -74,12 +74,12 @@ def inches(x):
 
 def y_time(time, scene):
     """calculate the y position within a schedule of the given time"""
-    bg = scene.objects[0]
+    bg = scene.get_canvas()
     first_period = to_min(start_times[0])
     return bg.max_y - minutes(to_min(time) - first_period, scene)
 
 def x_time(day, scene):
-    bg = scene.objects[0]
+    bg = scene.get_canvas()
     day_width = bg.width / 6.0
     # the "_" is for the label column :)
     return index_of(day, "_MTWRF") * day_width + bg.min_x
