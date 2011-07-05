@@ -1,5 +1,5 @@
 import os
-from pyparsing import Word, alphas, nums, oneOf
+from pyparsing import Word, alphas, nums, oneOf 
 from sched_util import Section
 
 def parse_line(txt):
@@ -38,9 +38,17 @@ def parse_line(txt):
             return x
     sectionPart.setParseAction(if_c_then_uppercase)
 
-    # parse: ['M', '12', '05', '301', 'Ojalvo', '14', '00']
-    day, h1, m1, sect, ta, h2, m2 = line.parseString(txt)
-    return Section(day, (int(h1), int(m1)), int(sect), ta, (int(h2),int(m2)))
+    # parses to a list of items ['M', '12', '05', '301',       'Ojalvo',  '14', '00'] or
+    #             (multi)       ['T', '14', '25', '(321) 301', 'Dhorkah', '17', '25'] or
+    #             (consult)     ['F', '8',  '00', 'C',                    '15', '00']
+    items = line.parseString(txt)
+    if len(items) == 6:
+        # consultation (no TA name)
+        day, h1, m1, sect, h2, m2 = items
+        return Section(day, (int(h1), int(m1)), sect, "", (int(h2), int(m2)))
+
+    day, h1, m1, sect, ta, h2, m2 = items
+    return Section(day, (int(h1), int(m1)), sect, ta, (int(h2),int(m2)))
 
 def parse_all_lines(txt):
     """Parse a block of text (has newlines), return as a list of Section
@@ -66,17 +74,18 @@ def parse_file(filename):
       }
     }
     """
-    k = filename[:-4] # drop ".txt"
-    course, room = k.split("_")
-    with open(filename, "r") as f:
+    with open(filename, 'r') as f:
         sect_list = parse_all_lines(f.read())
-        return ((int(course), int(room)), sect_list)
+    return ((int(course), int(room)), sect_list)
 
 def parse_all():
     files = filter(lambda f: f.endswith(".txt"), os.listdir("."))
     out = dict()
     for filename in files:
-        k, d = parse_file(filename)
+        k = filename[:-4] # drop ".txt"
+        course, room = k.split("_")
+        with open(filename, 'r') as f:
+            k, d = parse_file(course, room, f)
         out[k] = d
     return out
 

@@ -1,6 +1,7 @@
+#!/bin/env python3
 import sys
 import time
-from draw import HLine, Point, Rectangle, Scene, VLine, Text
+from draw import HLine, Point, Rectangle, Scene, Text
 from sched_parser import parse_all, parse_file
 from sched_util import inches, start_times, timeslot, x_time, y_time, \
                        time_to_str, Section
@@ -146,4 +147,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

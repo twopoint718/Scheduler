@@ -1,5 +1,7 @@
 import math
 import sys
+from functools import reduce
+
 
 class Point:
     """Point is a basic 2-d Cartesian pair.  This is used as the corners of
@@ -55,6 +57,7 @@ class Point:
     def __repr__(self):
         return "(%d, %d)" % (self.x, self.y)
 
+
 class Scene:
     """Scene is a list of geometric objects and a Rectangle boundary.  The
     objects are constrained to fit within the bounds of the scene"""
@@ -85,6 +88,7 @@ class Scene:
 
     def __repr__(self):
         return "Scene(%s, %s)" % (self.bounds, self.canvas)
+
 
 class Rectangle:
     """Defined by the lower-left corner (origin) and the upper-right corner
@@ -189,8 +193,10 @@ class Rectangle:
         """call to the low-level drawing primitives"""
         b = box(self.origin, self.extent, self.filled, self.fill_color,
                 toFile)
-        self.label.render(toFile)
-        return b
+        lab = list()
+        if self.label:
+            lab = self.label.render(toFile)
+        return b + lab
 
     def shrink(self, x):
         "return a rectangle that's smaller by x at each margin"
@@ -220,6 +226,7 @@ class Rectangle:
     def __repr__(self):
         return "Rectangle(%s, %s)" % (self.origin, self.extent)
 
+
 class HLine(Rectangle):
     """HLine is just a rectangle constrained to have zero vertical height
     """
@@ -232,17 +239,6 @@ class HLine(Rectangle):
     def __repr__(self):
         return "Horizontal(%s, width:%d)" % (self.origin, self.width)
 
-class VLine(Rectangle):
-    """VLine is just a rectangle constrained to have zero horizontal width
-    """
-    def __init__(self, origin, height):
-        self.height = height
-        self.origin = origin
-        self.extent = Point(origin.x, origin.y + height)
-        Rectangle.__init__(self, self.origin, self.extent)
-
-    def __repr__(self):
-        return "Vertical(%s, height:%d)" % (self.origin, self.height)
 
 class Text:
     """A Text object.  Often this is part of a Rectangle instance as its
@@ -264,16 +260,16 @@ class Text:
     def render(self, toFile=sys.stdout):
         """call to the low-level drawing primitives"""
         # render multiline text
+        retval = list()
         if type(self.txt) == type(list()):
             offset = self.size
-            text(Point(self.pos.x, self.pos.y - offset), self.txt[0],
-                 self.font, self.size, self.hCenter, toFile)
+            retval.extend(text(Point(self.pos.x, self.pos.y - offset), self.txt[0],
+                               self.font, self.size, self.hCenter, toFile))
             for line in self.txt[1:]:
                 offset = offset + (self.size - 2)
-                text(Point(self.pos.x, self.pos.y - offset), line, self.font,
-                     self.size - 2, self.hCenter, toFile)
-
-            return "\n".join(self.txt)
+                retval.extend(text(Point(self.pos.x, self.pos.y - offset), line, self.font,
+                                   self.size - 2, self.hCenter, toFile))
+            return retval
 
         # single line of text
         return text(self.pos, self.txt, self.font, self.size, self.hCenter, toFile)

@@ -19,16 +19,20 @@ class Section:
         else:
             raise ValueError("Day must be one of MTWRF")
         self.start = start
-        self.num = int(num)
+        self.num = num
         self.ta = ta
         self.end = end
 
+    def __eq__(self, other):
+        return self.day == other.day and \
+               self.start == other.start and \
+               self.num == other.num and \
+               self.ta == other.ta and \
+               self.end == other.end
+
     def __repr__(self):
-        return "Section(%s, %s, %d, %s, %s)" % (self.day, 
-                                                time_to_str(self.start),
-                                                self.num,
-                                                self.ta,
-                                                time_to_str(self.end))
+        return "Section('%s', %s, '%s', '%s', %s)" % \
+            (self.day, self.start, self.num, self.ta, self.end)
 
 start_times = [(7,45),  (8,50),  (9,55), (11,0), (12,5), (13,20),
                (14,25), (15,30), (16,35), (19,5), (21,0), (22,0), (23,0)]
