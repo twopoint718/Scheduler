@@ -1,7 +1,7 @@
 #!/bin/env python3
 from draw import Point, Scene, Rectangle, HLine, Text
 from sched_parser import parse_line, parse_all_lines, parse_file, parse_all
-from sched_util import inches, Section
+from sched_util import *
 import unittest
 import os
 import tempfile
@@ -269,7 +269,8 @@ M,12:05 301     Ojalvo    14:00
 M,14:25 302     Carmody   16:20
 M,16:35 303     Ojalvo    18:30
 M,19:05 304     N/A       21:00
-
+# comment line
+xxx
 T,7:45  305     Carmody    9:40
 T,9:55  306     Zeng      11:50
 T,12:05 307     Zeng      14:00
@@ -312,7 +313,7 @@ F,16:00 c 17:00
         self.assertEqual(p, self.sampleParse1)
 
     def testParseFile(self):
-        p = parse_file()
+        p = parse_file(self.fname)
         self.assertEqual(p, ((103, 4320), self.sampleParse1))
 
     def testParseAll(self):
@@ -320,7 +321,72 @@ F,16:00 c 17:00
             f.write(bytes(self.sampleText1, 'UTF-8'))
         p = parse_all()
         self.assertEqual(p, { (103, 4320): self.sampleParse1 })
-        
+
+
+class TestUtil(unittest.TestCase):
+    def setUp(self):
+        r1 = Rectangle(Point(0,0), Point(10,10))
+        r2 = Rectangle(Point(2,2), Point(8,8))
+        self.r3 = Rectangle(Point(0,0), Point(0,0))
+        self.s = Scene(r1)
+        self.s.add(r2) # set canvas
+
+    def testInvalidDay(self):
+        self.assertRaises(ValueError, Section, "X", (14,0), "301", "Foo", (16,0))
+
+    def testSectionDisplay(self):
+        self.assertEqual("Section('M', (14, 0), '301', 'Foo', (16, 0))",
+                         "%s" % Section('M', (14, 0), '301', 'Foo', (16, 0)))
+
+    def testMinutes(self):
+        self.assertEqual(minutes(10, self.s), 60/915.0)
+        self.assertEqual(minutes(0, self.s), 0)
+        self.s.add(self.r3, True) # make zero-height canvas
+        self.assertEqual(minutes(500, self.s), 0)
+
+    def testIndexOf(self):
+        self.assertIsNone(index_of("cat", ["bird", "dog"]))
+        self.assertEqual(0, index_of(5, [5, 4, 2]))
+
+    def testToMin(self):
+        self.assertEqual(0, to_min((0, 0)))
+        self.assertEqual(120, to_min((2, 0)))
+
+    def testSubTimes(self):
+        self.assertEqual(0, sub_times((4,5), (4,5)))
+
+    def testTimeToStr(self):
+        self.assertEqual("5:30", time_to_str((17,30)))
+        self.assertEqual("12:00", time_to_str((12,0)))
+        self.assertEqual("1:00", time_to_str((13,0)))
+
+    def testInches(self):
+        self.assertEqual(inches(10), 720)
+        self.assertEqual(inches(0), 0)
+
+    def testYTime(self):
+        bg = self.s.get_canvas()
+        self.assertEqual(bg.max_y, y_time((7,45), self.s))
+        self.assertEqual(bg.min_y, y_time((23,00), self.s))
+        self.assertEqual(bg.center_y, y_time((15, 22.5), self.s))
+
+    def testXTime(self):
+        bg = self.s.get_canvas()
+        day = bg.width / 6.0 
+        self.assertEqual(1 + bg.min_x, x_time("M", self.s))
+        self.assertEqual(2 + bg.min_x, x_time("T", self.s))
+        self.assertEqual(bg.center_x,  x_time("W", self.s))
+        self.assertEqual(4 + bg.min_x, x_time("R", self.s))
+        self.assertEqual(5 + bg.min_x, x_time("F", self.s))
+
+    def testTimeslot(self):
+        s1 = Section("M", (7,45), "301", "Foo", (23,0))
+        s2 = Section("M", (7,45), "301", "Foo", (7,45))
+        t = timeslot(s1, self.s)
+        bg = self.s.get_canvas()
+        day = bg.width / 6.0
+        self.assertTrue(t.contained_in(self.s.get_canvas()))
+        self.assertEqual(0, timeslot(s2, self.s).height)
 
 def suite():
     suite = unittest.TestSuite()
@@ -330,8 +396,9 @@ def suite():
     suite.addTest(unittest.makeSuite(TestHLine))
     suite.addTest(unittest.makeSuite(TestText))
     suite.addTest(unittest.makeSuite(TestParser))
+    suite.addTest(unittest.makeSuite(TestUtil))
     return suite
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     import sys, os
     unittest.TextTestRunner(verbosity=2).run(suite())

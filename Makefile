@@ -17,8 +17,15 @@ dist: distclean
 
 coverage: $(PYFILES)
 	coverage run --omit pyparsing.py test_scheduler.py
+	coverage report -m
 	coverage html
-	@echo "Open htmlcov/index.html to view test coverage"
+	@echo "Open htmlcov/index.html to view test coverage as HTML"
+
+branchcov: $(PYFILES)
+	coverage run --branch --omit pyparsing.py test_scheduler.py
+	coverage report -m
+	coverage html
+	@echo "Open htmlcov/index.html to view branch coverage as HTML"
 
 test: $(PYFILES)
 	./test_scheduler.py

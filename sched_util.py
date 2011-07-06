@@ -47,7 +47,7 @@ timespan = 915
 
 def minutes(m, scene):
     """convert from time-based minutes to screen (vert) distance"""
-    bg = scene.objects[0]
+    bg = scene.get_canvas()
     return (1.0 * bg.height / timespan) * m
 
 def index_of(item, seq):
@@ -91,7 +91,7 @@ def x_time(day, scene):
 def timeslot(sect, scene):
     """Returns a Rectangle positioned at the given day and start time """
     # get "left" and "right" of the day rectangle
-    day_width = scene.objects[0].width / 6.0
+    day_width = scene.get_canvas().width / 6.0
     xpos_left = x_time(sect.day, scene)
     xpos_right = xpos_left + day_width
 

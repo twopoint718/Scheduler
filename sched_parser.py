@@ -74,6 +74,8 @@ def parse_file(filename):
       }
     }
     """
+    k = filename[:-4] # drop ".txt"
+    course, room = k.split("_")
     with open(filename, 'r') as f:
         sect_list = parse_all_lines(f.read())
     return ((int(course), int(room)), sect_list)
@@ -82,14 +84,11 @@ def parse_all():
     files = filter(lambda f: f.endswith(".txt"), os.listdir("."))
     out = dict()
     for filename in files:
-        k = filename[:-4] # drop ".txt"
-        course, room = k.split("_")
-        with open(filename, 'r') as f:
-            k, d = parse_file(course, room, f)
+        k, d = parse_file(filename)
         out[k] = d
     return out
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     import pprint
     pp = pprint.PrettyPrinter(indent=2)
     pp.pprint(parse_all())

@@ -2,18 +2,27 @@
  Scheduler
 ===========
 
-Scheduler generates pretty-printed lab information placards for lab rooms.
-The usage is simple, the program takes no command line parameters.
-Scheduler looks for text files in the same directory as itself that are
-named like:
+Scheduler generates pretty-printed lab information placards in PostScript
+format for lab rooms.  The usage is simple: the program takes no command
+line parameters.  Scheduler looks for text files in the same directory as
+itself that are named like:
 
     103_4320.txt
 
 where '103' is a course number and '4320' is a room number.  The files
-contain lab sections, one per line, in the following format:
+contain lab sections, one per line, in the following format(s):
 
-    M,12:05   301   Ojalvo   14:00
+    M,12:05   301      Ojalvo    14:00
 
+                   --or--
+
+    T,14:25   (321)301 Dhorkah   17:25  (multiple labs in one room)
+    W,14:25   (623)301 McDermott 17:25
+
+                   --or--
+
+    F,8:00    C                  15:00  (consultation section)
+    
 additional whitespace is not significant between groups of non-whitespace
 characters, though there has to be at least some!  Please note that the
 'M,12:05' part MUST NOT contain whitespace, and MUST contain a comma.
@@ -52,3 +61,19 @@ The output will resemble this...
 | 10:00 |               |         |           |          |        |
 |-------+---------------+---------+-----------+----------+--------|
 
+
+Installation and Usage
+----------------------
+
+Scheduler is a Python 3 program.  It will not work with the Python 2.x
+series.  Just run the 'scheduler.py' program in the main directory.
+
+Coverage and Testing
+--------------------
+
+Scheduler comes with a test suite, 'test_scheduler.py', which provides many
+test cases in an effort to get 100% line coverage.  You can run the
+coverage tool with 'make coverage'.  This will run the test suite and
+determine if it exercises all lines of code.  There should be 100% coverage
+in all the modules tested.  You will need Ned Batchelder's 'coverage' tool
+in order to run this: http://nedbatchelder.com/code/coverage/
