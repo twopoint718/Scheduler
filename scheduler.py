@@ -79,10 +79,14 @@ def schedule(lab_label="Testing",
     s = add_sections(section_data, s, bounding_box)
 
     # render the result
-    s.render(outfile)
+    if format == "SVG":
+        s.render_svg(outfile)
+    else:
+        s.render(outfile)
 
 def summary(lab_data,
-            bounding_box=Rectangle(Point(0,0), Point(inches(8.5), inches(11)))):
+            bounding_box=Rectangle(Point(0,0), Point(inches(8.5), inches(11))),
+            format="PS"):
 
     bounding_box = bounding_box.translate((8, -36))
     s = Scene(bounding_box)
@@ -122,11 +126,77 @@ def summary(lab_data,
     label = "%s %d" % (session, yr)
     s.add(Text(Point(inches(8.5)/2.0, inches(11) - inches(0.50)), 
                label, True, "Helvetica", 36))
-
+    
     with open("summary.ps", "w") as outfile:
         s.render(outfile)
 
-def main():
+def schedule_grid_svg(title, scene, bounding_box, font_base=12):
+    """Draws standard schedule grid, SVG
+    """
+    margin = 5
+    
+    # add background (shaded area)
+    title_font = font_base + 4
+    o, e = bounding_box.origin, bounding_box.extent
+    bg = Rectangle(o, e)
+    bg = bg.shrink(margin).lower_svg(40).fill(0.8).label_above_svg(title, title_font, 12)
+
+    day_width = bg.width / 6.0
+
+    # label column on left
+    lab = Rectangle(bg.origin.copy(), Point(bg.min_x + day_width, bg.max_y))
+
+    # add days
+    adj = -2 # move labels slightly down
+    fs = font_base - 2
+    mon = lab.copy().fill(0.8).translate((day_width, 0)).label_above_svg("Monday", fs, adj)
+    tue = mon.copy().fill(0.8).translate((day_width, 0)).label_above_svg("Tuesday", fs, adj)
+    wed = tue.copy().fill(0.8).translate((day_width, 0)).label_above_svg("Wednesday", fs, adj)
+    thu = wed.copy().fill(0.8).translate((day_width, 0)).label_above_svg("Thursday", fs, adj)
+    fri = thu.copy().fill(0.8).translate((day_width, 0)).label_above_svg("Friday", fs, adj)
+
+    # add the days to the scene
+    scene.add(bg, True) # make this the working canvas
+    scene.add(mon)
+    scene.add(tue)
+    scene.add(wed)
+    scene.add(thu)
+    scene.add(fri)
+
+    # fill in time labels (and draw horiz lines)
+    linespacing = int(-1.0 * fs / 0.8)
+    for t in reversed(start_times[:-1]):
+        ypos = bg.max_y - y_time(t, scene) + bg.min_y
+        h = HLine(Point(bg.min_x, ypos), bg.width)
+        h.label_below_left_svg(time_to_str(t), fs, 5, -linespacing)
+        scene.add(h)
+
+    return scene
+
+def add_sections_svg(section_data, s, bounding_box):
+    return s
+
+def schedule_svg(lab_label="Testing",
+                 section_data=list(),
+                 outfile=sys.stdout,
+                 bounding_box=Rectangle(Point(0,0), Point(850, 400))):
+
+    # schedules are on half-sheets
+    s = Scene(bounding_box)
+
+    # draw the scheduling grid
+    s = schedule_grid_svg(lab_label, s, bounding_box)
+
+    # add sections to schedule
+    s = add_sections_svg(section_data, s, bounding_box)
+
+    # render the result
+    s.render_svg(outfile)
+
+def summary_svg(data):
+    pass
+    
+def main(format="PS"):
     # read in all .txt files
     data = parse_all()
 
@@ -137,13 +207,19 @@ def main():
         course_num, room_num = course_key
 
         # render the collected information to file
-        with open("%d_%d.ps" % (course_num, room_num), "w") as outfile:
-            schedule("Physics %d | %d" % (course_num, room_num), section_data,
-                     outfile)
-
+        if format == "SVG":
+            with open("%d_%d.svg" % (course_num, room_num), "w") as outfile:
+                schedule_svg("Physics %d | %d" % (course_num, room_num), 
+                             section_data, outfile)
+        else: # PS default
+            with open("%d_%d.ps" % (course_num, room_num), "w") as outfile:
+                schedule("Physics %d | %d" % (course_num, room_num), 
+                         section_data, outfile)
     # generate summary
-    summary(data)
-
+    if format == "SVG":
+        summary_svg(data)
+    else:
+        summary(data)
 
 if __name__ == "__main__":
-    main()
+    main(format="SVG")

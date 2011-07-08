@@ -1,6 +1,9 @@
 import math
 import sys
 from functools import reduce
+from draw_prim import render_preamble, render_footer, box, text, \
+                      svg_render_preamble, svg_render_footer, svg_box, svg_text, \
+                      svg_text_multi, svg_hline
 
 
 class Point:
@@ -86,6 +89,12 @@ class Scene:
             obj.render(toFile)
         render_footer(toFile)
 
+    def render_svg(self, toFile=sys.stdout):
+        svg_render_preamble(self.bounds, toFile)
+        for obj in self.objects:
+            obj.render_svg(toFile)
+        svg_render_footer(toFile)
+
     def __repr__(self):
         return "Scene(%s, %s)" % (self.bounds, self.canvas)
 
@@ -161,14 +170,31 @@ class Rectangle:
         self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=True)
         return self
 
+    def label_above_svg(self, txt, fontsize=12, vbump=0):
+        """Create a centered label above the rectangle"""
+        p = Point(self.center_x, self.min_y - fontsize/2 - vbump)
+        self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=True)
+        return self
+
     def label_above_left(self, txt, fontsize=12.0, hbump=0):
         """create a label above and to the left of the rectangle"""
         p = Point(self.origin.x + hbump, self.max_y + fontsize/2)
         self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=False)
         return self
 
+    def label_above_left_svg(self, txt, fontsize=12, hbump=0, vbump=0):
+        """create a label above and to the left of the rectangle"""
+        p = Point(self.origin.x + hbump, self.min_y - fontsize/2 + vbump)
+        self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=False)
+        return self
+
     def label_below_left(self, txt, fontsize=12.0, hbump=0, vbump=0):
         p = Point(self.origin.x + hbump, self.min_y - fontsize/2 + vbump)
+        self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=False)
+        return self
+
+    def label_below_left_svg(self, txt, fontsize=12, hbump=0, vbump=0):
+        p = Point(self.origin.x + hbump, self.max_y + fontsize/2 + vbump)
         self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=False)
         return self
 
@@ -198,6 +224,14 @@ class Rectangle:
             lab = self.label.render(toFile)
         return b + lab
 
+    def render_svg(self, toFile=sys.stdout):
+        b = svg_box(self.origin, self.extent, self.filled, self.fill_color,
+                    toFile)
+        lab = list()
+        if self.label:
+            lab = self.label.render_svg(toFile)
+        return b + lab
+
     def shrink(self, x):
         "return a rectangle that's smaller by x at each margin"
         o, e = self.origin.slide(x), self.extent.slide(-1 * x)
@@ -217,9 +251,16 @@ class Rectangle:
         return self
 
     def lower(self, i):
-        """decrease the height by x (from the top)"""
+        """decrease the height by i (from the top)"""
         e = Point(self.extent.x, self.extent.y - i)
         o = self.origin
+        self.__resize(o, e)
+        return self
+
+    def lower_svg(self, i):
+        """decrease the height by i (from the top)"""
+        e = self.extent
+        o = Point(self.origin.x, self.origin.y + i)
         self.__resize(o, e)
         return self
 
@@ -238,6 +279,11 @@ class HLine(Rectangle):
 
     def __repr__(self):
         return "Horizontal(%s, width:%d)" % (self.origin, self.width)
+
+    def render_svg(self, toFile=sys.stdout):
+        if self.label:
+            l = self.label.render_svg(toFile)
+        return l + svg_hline(self.origin, self.width, toFile)
 
 
 class Text:
@@ -273,69 +319,15 @@ class Text:
 
         # single line of text
         return text(self.pos, self.txt, self.font, self.size, self.hCenter, toFile)
-    
+
+    def render_svg(self, toFile=sys.stdout):
+        retval = list()
+        if type(self.txt) == type(list()):
+            return svg_text_multi(self.pos, self.txt, self.font, self.size,
+                                  self.hCenter, toFile)
+        return svg_text(self.pos, self.txt, self.font, self.size, 
+                        self.hCenter, toFile)
+
     def __repr__(self):
         return "Text(%s)" % self.txt
 
-#
-# Drawing primitives (here be PostScript-specific dragons)
-#
-def render_preamble(rect, toFile=sys.stdout):
-    """Emit the required boilerplate for a postscript document"""
-    page_height = rect.max_y - rect.min_y
-    print("""%%!PS-Adobe-2.0
-%%%%BoundingBox: 0 0 612 %d
-%%%%Creator: scheduler <cwilson@physics.wisc.edu>
-%%%%Title: lab schedule
-%%%%Pages: 1
-%%%%PageOrder: Ascend
-%%%%DocumentData: Clean7Bit
-%%%%EndComments
-%%%%BeginProlog
-%%%%EndProlog
-%%%%BeginSetup
-<< /PageSize [612 %d] >> setpagedevice
-%%%%EndSetup
-%%%%Page: 1 1""" % (page_height, page_height), file=toFile)
-    return
-
-def render_footer(toFile=sys.stdout):
-    """Emit the required trailing boilerplate for a postscript document"""
-    print("showpage", file=toFile)
-    print("%%Trailer", file=toFile)
-    print("%%EOF", file=toFile)
-
-def box(p1, p2, fill=False, color=1.0, toFile=sys.stdout):
-    """Draw a basic rectangle with corners at p1 and p2.  Pretty much a
-    low-level mapping of the Rectangle object"""
-    w = p2.x - p1.x
-    h = p2.y - p1.y
-    lines = list()
-    lines.append("%% BOX at %s %f by %f" % (p1, w, h))
-    lines.append("%f %f moveto" % (p1.x, p1.y))
-    lines.append("%f 0 rlineto" % w)
-    lines.append("0 %f rlineto" % h)
-    lines.append("%f 0 rlineto" % (-1.0*w))
-    lines.append("0 %f rlineto" % (-1.0*h))
-    if fill:
-        lines.append("gsave closepath")
-        lines.append("%0.2f setgray" % color)
-        lines.append("fill")
-        lines.append("0 setgray grestore")
-    lines.append("closepath stroke")
-    print("\n".join(lines), file=toFile)
-    return lines
-
-def text(pt, txt, font="Helvetica", size=12, center=True, toFile=sys.stdout):
-    """Draw a line of PostScript text. Normally, code to center the line
-    horizontally is emitted."""
-    lines = list()
-    lines.append("%% LABEL at %s (%s)" % (pt, txt))
-    lines.append("%f %f moveto" % (pt.x, pt.y))
-    lines.append("/%s findfont %f scalefont setfont" % (font, size))
-    if center:
-        lines.append("(%s) dup stringwidth pop 2 div neg 0 rmoveto show" % txt)
-    else:
-        lines.append("(%s) show" % txt)
-    print("\n".join(lines), file=toFile)
-    return lines
