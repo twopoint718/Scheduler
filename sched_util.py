@@ -101,3 +101,18 @@ def timeslot(sect, scene):
 
     return Rectangle(Point(xpos_left, ypos_bot),
                      Point(xpos_right, ypos_top))
+
+def timeslot_svg(sect, scene):
+    """Returns a Rectangle positioned at the given day and start time """
+    # get "left" and "right" of the day rectangle
+    day_width = scene.get_canvas().width / 6.0
+    xpos_left = x_time(sect.day, scene)
+    xpos_right = xpos_left + day_width
+
+    bg = scene.get_canvas()
+    # get "top" and "bottom" of the timeslot rectangle
+    ypos_top = y_time(start_times[0], scene) - y_time(sect.start, scene) + bg.min_y
+    ypos_bot = y_time(start_times[0], scene) - y_time(sect.end, scene) + bg.min_y
+
+    return Rectangle(Point(xpos_left, ypos_bot),
+                     Point(xpos_right, ypos_top))

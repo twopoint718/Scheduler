@@ -4,7 +4,7 @@ import time
 from draw import HLine, Point, Rectangle, Scene, Text
 from sched_parser import parse_all, parse_file
 from sched_util import inches, start_times, timeslot, x_time, y_time, \
-                       time_to_str, Section
+                       time_to_str, Section, timeslot_svg
 
 def schedule_grid(title, scene, bounding_box, font_base=12):
     """Draws a standard Schedule grid:
@@ -62,6 +62,35 @@ def add_sections(section_data, scene, bounding_box, font_base=12):
                  time_to_str(sect.start) + " -- " + time_to_str(sect.end)]
         r.label_inside_multi(lines, font_base-2, h_tweak, v_tweak).fill(1.0)
         scene.add(r)
+
+    return scene
+
+def add_sections_svg(section_data, scene, bounding_box, font_base=12):
+    if not section_data:
+        return scene
+
+    v_tweak = font_base / 5
+    h_tweak = font_base / 2
+    for sect in section_data:
+        r = timeslot_svg(sect, scene)
+        lines = [str(sect.num), sect.ta, 
+                 time_to_str(sect.start) + " -- " + time_to_str(sect.end)]
+        r.label_inside_multi_svg(lines, font_base-2, h_tweak, v_tweak).fill(1.0)
+        scene.add(r)
+
+    return scene
+
+def add_section_svg(sect, scene, bounding_box, font_base=12):
+    if not sect:
+        return scene
+
+    v_tweak = font_base / 5
+    h_tweak = font_base / 2
+    r = timeslot_svg(sect, scene)
+    lines = [str(sect.num), sect.ta, 
+             time_to_str(sect.start) + " -- " + time_to_str(sect.end)]
+    r.label_inside_multi_svg(lines, font_base-2, h_tweak, v_tweak).fill(1.0)
+    scene.add(r)
 
     return scene
 
@@ -172,9 +201,6 @@ def schedule_grid_svg(title, scene, bounding_box, font_base=12):
         scene.add(h)
 
     return scene
-
-def add_sections_svg(section_data, s, bounding_box):
-    return s
 
 def schedule_svg(lab_label="Testing",
                  section_data=list(),

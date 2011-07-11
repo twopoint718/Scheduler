@@ -90,10 +90,12 @@ class Scene:
         render_footer(toFile)
 
     def render_svg(self, toFile=sys.stdout):
-        svg_render_preamble(self.bounds, toFile)
+        out = list()
+        out.extend(svg_render_preamble(self.bounds, toFile))
         for obj in self.objects:
-            obj.render_svg(toFile)
-        svg_render_footer(toFile)
+            out.extend(obj.render_svg(toFile))
+        out.extend(svg_render_footer(toFile))
+        return "\n".join(out)
 
     def __repr__(self):
         return "Scene(%s, %s)" % (self.bounds, self.canvas)
@@ -205,6 +207,14 @@ class Rectangle:
         """
         p = Point(self.center_x, self.center_y - fontsize/2.7)
         self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=True)
+        return self
+
+    def label_inside_multi_svg(self, txt, fontsize=10, hbump=0, vbump=0):
+        """label inside the rectangle starting in the upper left, suitable
+        for labeling section information
+        """
+        p = Point(self.min_x + hbump, self.max_y + fontsize + vbump)
+        self.label = Text(p, txt, size=fontsize, font="Helvetica", hCenter=False)
         return self
 
     def label_inside_multi(self, txt, fontsize=10, hbump=0, vbump=0):

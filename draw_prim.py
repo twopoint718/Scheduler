@@ -68,8 +68,9 @@ def text(pt, txt, font="Helvetica", size=12, center=True, toFile=sys.stdout):
 #
 def svg_render_preamble(rect, toFile=sys.stdout):
     lines = list()
-    lines.append('<svg xmlns="http://www.w3.org/2000/svg"\n' +
-          '\txmlns:xlink="http://www.w3.org/1999/xlink">')
+    lines.append('<svg xmlns="http://www.w3.org/2000/svg" ' +
+                 'width="%dpx" height="%dpx" ' % (rect.width, rect.height) +
+                 'xmlns:xlink="http://www.w3.org/1999/xlink">')
     print("\n".join(lines), file=toFile)
     return lines
 
