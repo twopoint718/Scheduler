@@ -2,6 +2,7 @@ import sys
 import os
 from PyQt4 import QtCore, QtGui
 from auto_main import Ui_MainWindow
+from auto_about import Ui_Dialog
 from scheduler import schedule_grid_svg, add_section_svg
 from draw import Scene, Rectangle, Point
 from sched_parser import parse_line
@@ -20,6 +21,11 @@ class MyWindow(QtGui.QMainWindow):
         self.s = schedule_grid_svg(self.title, self.s, self.r)
         self.numobjects = 0
         self.min_objects = len(self.s.objects)
+
+        # init menubar
+        self.ui.actionAbout.setShortcut("F1")
+        self.ui.actionPrint.setShortcut("Ctrl+S")
+        self.ui.actionQuit.setShortcut("Ctrl+Q")
 
         self.null = open(os.devnull, "w")
         self.refresh_scene()
@@ -60,11 +66,53 @@ class MyWindow(QtGui.QMainWindow):
             self.s.objects.pop()
             self.refresh_scene()
 
+    @QtCore.pyqtSignature("")
+    def on_actionAbout_triggered(self):
+        a = AboutBox().exec_()
+        return a
+
+    @QtCore.pyqtSignature("")
+    def on_actionPrint_triggered(self):
+        sshot = QtGui.QPixmap.grabWidget(self.ui.svgWidget)
+        filename = self.ui.schedule_title.text() + ".png"
+        sshot.save(filename)
+        self.info_box("Saved as: " + filename)
+
+    @QtCore.pyqtSignature("")
+    def on_actionQuit_triggered(self):
+        QtCore.QCoreApplication.quit()
+
     def refresh_scene(self):
-        txt = QtCore.QByteArray(self.s.render_svg(self.null))
+        byts = bytes(self.s.render_svg(self.null), encoding='utf8')
+        txt = QtCore.QByteArray(byts)
         self.ui.svgWidget.load(txt)
 
-    
+    def info_box(self, msg):
+        dialog = QtGui.QDialog(self)
+        dialog.setWindowTitle("Info")
+        label = QtGui.QLabel(msg)
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(label)
+        buttonbox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Close,
+                                           accepted=dialog.accept,
+                                           rejected=dialog.reject)
+        layout.addWidget(buttonbox)
+        dialog.setLayout(layout)
+        dialog.exec_()
+        
+
+class AboutBox(QtGui.QDialog):
+    def __init__(self,parent=None):
+        QtGui.QDialog.__init__(self, parent)
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        self.setModal(False)
+
+    @QtCore.pyqtSignature("")
+    def on_pushButton_pressed(self):
+        self.done(0)
+
+
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     win = MyWindow()

@@ -1,5 +1,4 @@
 import sys
-
 #
 # Drawing primitives (here be PostScript-specific dragons)
 #
@@ -112,17 +111,14 @@ def svg_text_multi(pt, txt, font="Helvetica", size=12, center=True,
         anchorpos = "middle"
     else:
         anchorpos = "start"
-    style = "font-family: '%s'; font-size: %d;" % (font, size)
-    lines.append('<text x="%f" y="%f" style="%s" text-anchor="%s">' % \
-                     (pt.x, pt.y, style, anchorpos))
-    first = True
-    for line in txt:
-        if first:
-            lines.append("\t<tspan>%s</tspan>" % line)
-            first = False
-        else:
-            lines.append('\t<tspan x="%d" dy="1em">%s</tspan>' % (pt.x, line))
-    lines.append("</text>")
+
+    # heading
+    lines.extend(svg_text(pt, txt[0], "Helvetica", size+2, False, toFile))
+    offset = 0
+    for line in txt[1:]:
+        offset = offset + size
+        lines.extend(svg_text(pt.translate((0,offset)), line, "Helvetica",
+                              size, False, toFile))
     print("\n".join(lines), file=toFile)
     return lines
 

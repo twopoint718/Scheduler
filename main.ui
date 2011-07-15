@@ -212,6 +212,7 @@
      <string>File</string>
     </property>
     <addaction name="actionPrint"/>
+    <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -230,7 +231,12 @@
   </action>
   <action name="actionPrint">
    <property name="text">
-    <string>Print</string>
+    <string>Save Image</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
    </property>
   </action>
  </widget>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main.ui'
 #
-# Created: Tue Jul 12 12:19:52 2011
+# Created: Fri Jul 15 16:59:12 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -116,7 +116,10 @@ class Ui_MainWindow(object):
         self.actionAbout.setObjectName(_fromUtf8("actionAbout"))
         self.actionPrint = QtGui.QAction(MainWindow)
         self.actionPrint.setObjectName(_fromUtf8("actionPrint"))
+        self.actionQuit = QtGui.QAction(MainWindow)
+        self.actionQuit.setObjectName(_fromUtf8("actionQuit"))
         self.menuScheduler.addAction(self.actionPrint)
+        self.menuScheduler.addAction(self.actionQuit)
         self.menuAbout.addAction(self.actionAbout)
         self.menubar.addAction(self.menuScheduler.menuAction())
         self.menubar.addAction(self.menuAbout.menuAction())
@@ -145,5 +148,6 @@ class Ui_MainWindow(object):
         self.menuScheduler.setTitle(QtGui.QApplication.translate("MainWindow", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.menuAbout.setTitle(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
         self.actionAbout.setText(QtGui.QApplication.translate("MainWindow", "About", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionPrint.setText(QtGui.QApplication.translate("MainWindow", "Print", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionPrint.setText(QtGui.QApplication.translate("MainWindow", "Save Image", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionQuit.setText(QtGui.QApplication.translate("MainWindow", "Quit", None, QtGui.QApplication.UnicodeUTF8))
 

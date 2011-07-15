@@ -136,8 +136,6 @@ class TestRectangle(unittest.TestCase):
         self.r.translate((2, 3))
         self.assertEqual(self.r.origin, Point(2,3))
         self.assertEqual(self.r.extent, Point(12, 13))
-        self.assertIs(o, self.r.origin)
-        self.assertIs(e, self.r.extent)
 
     def testLower(self):
         self.r.lower(5)

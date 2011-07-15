@@ -53,9 +53,7 @@ class Point:
         would slide by x+a, y+b
         """
         a, b = mov
-        self.x = self.x + a
-        self.y = self.y + b
-        return self
+        return Point(self.x + a, self.y + b)
     
     def __repr__(self):
         return "(%d, %d)" % (self.x, self.y)
